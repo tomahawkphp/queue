@@ -1,4 +1,4 @@
-# NiceQueue
+# Tomahawk Queue
 
 A nice and simple PHP Worker Queue library
 
@@ -11,4 +11,4 @@ A nice and simple PHP Worker Queue library
 
 ## License
 
-NiceQueue is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT)
+Tomahawk Queue is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT)
