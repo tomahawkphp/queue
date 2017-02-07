@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tomahawk
+        bootstrap="./queue-bootstrap.php">
+
+    <workers>
+        <worker amount="2" queue="emails" />
+    </workers>
+
+</tomahawk>
