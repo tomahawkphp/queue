@@ -71,7 +71,30 @@ class Worker
 
                 try {
 
-                    $job->process();
+                    $pid = pcntl_fork();
+
+                    if (-1 === $pid) {
+                        throw new \RuntimeException('Could not fork process');
+                    }
+
+                    if (0 === $pid || false === $pid) {
+                        $job->process();
+                        if (0 === $pid) {
+                            //file_put_contents(__DIR__ .'/../../../log/test.log', 'Exiting...' . PHP_EOL, FILE_APPEND);
+                            exit(0);
+                        }
+                    }
+                    else if($pid > 0) {
+                        $status = 'Forked ' . $pid . ' at ' . strftime('%F %T');
+                        //file_put_contents(__DIR__ .'/../../../log/test.log', $status . PHP_EOL, FILE_APPEND);
+                        pcntl_wait($status);
+                        $exitStatus = pcntl_wexitstatus($status);
+                        if (0 !== $exitStatus) {
+                            //Job exited with exit code
+                        }
+                    }
+
+                    $pid = null;
                 }
                 catch (\Exception $e) {
 

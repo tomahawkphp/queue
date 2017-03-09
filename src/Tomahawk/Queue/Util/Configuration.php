@@ -1,8 +1,6 @@
 <?php
 
 namespace Tomahawk\Queue\Util;
-use DOMDocument;
-use DOMXPath;
 
 /**
  * Class Configuration
@@ -12,55 +10,28 @@ use DOMXPath;
 class Configuration
 {
     /**
-     * @var string
+     * @var array
      */
-    private $directory;
+    private $config;
 
-    public function __construct($directory)
+    public function __construct(array $config)
     {
-        $this->directory = $directory;
+        $this->config = $config;
     }
 
-    public function load()
+    /**
+     * @return string|null
+     */
+    public function getBootstrap()
     {
-        $contents  = file_get_contents($this->directory . '/tomahawk.xml');
+        return isset($this->config['bootstrap']) ? $this->config['bootstrap'] : null;
+    }
 
-        //var_dump($contents);
-        //exit;
-
-        $document = new DOMDocument();
-        $document->preserveWhiteSpace = false;
-        $internal  = libxml_use_internal_errors(true);
-        $message   = '';
-        $reporting = error_reporting(0);
-        $document->loadXML($contents);
-
-        $xpath = new DOMXPath($document);
-
-        $root = $document->documentElement;
-
-        if ($root->hasAttribute('bootstrap')) {
-            //echo $root->getAttribute('bootstrap');
-        }
-
-        foreach ($xpath->query('workers/worker') as $worker) {
-
-            /** @var \DOMNode $worker */
-
-            $queues = [];
-
-            var_dump(
-                $worker->attributes->getNamedItem('amount')->textContent,
-                $worker->attributes->getNamedItem('queue')->textContent
-            );
-
-
-            //$root->has('workers')
-            //echo $root->getAttribute('bootstrap');
-        }
-
-
-
-        //$domxpath->query('tomahawk')
+    /**
+     * @return array
+     */
+    public function getWorkers()
+    {
+        return isset($this->config['workers']) ? $this->config['workers'] : [];
     }
 }

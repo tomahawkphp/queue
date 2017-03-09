@@ -8,41 +8,27 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Process\PhpExecutableFinder;
+use Symfony\Component\Process\Process;
 use Symfony\Component\Process\ProcessUtils;
 use Tomahawk\Queue\Storage\StorageInterface;
 use Tomahawk\Queue\Worker;
 
 /**
- * Class WorkerCommand
+ * Class ListenCommand
  *
  * @package Tomahawk\Queue\Console\Command
  */
-class WorkerCommand extends ContainerAwareCommand
+class ListenCommand extends ContainerAwareCommand
 {
-    /**
-     * @var Worker
-     */
-    protected $worker;
-
     /**
      * @var bool
      */
     protected $running = true;
 
     /**
-     * @var bool
-     */
-    protected $shutdown = false;
-
-    /***
-     * @var bool
-     */
-    protected $paused = false;
-
-    /**
      * @var array
      */
-    protected $queues =[];
+    protected $queues = [];
 
     /**
      * @var string
@@ -52,9 +38,8 @@ class WorkerCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-            ->setName('work')
+            ->setName('listen')
             ->setDescription('description')
-            ->addOption('daemon', null, InputOption::VALUE_NONE, 'Run worker as a daemon')
             ->addArgument('queues', null, InputArgument::REQUIRED, 'Name of queues comma separated')
             ->setHelp('help')
         ;
@@ -63,48 +48,30 @@ class WorkerCommand extends ContainerAwareCommand
     /**
      * @param InputInterface $  input
      * @param OutputInterface $output
-     * @return int|null
+     * @return int|null|void
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        // Ideally we want to be able to run multiple workers for other queues
-        // for forking and creating the pid file needs some work
-        $pid = pcntl_fork();
+        $command = $this->buildCommandTemplate();
+        $command = sprintf($command, $input->getArgument('queues'));
 
-        $folder = getcwd() . '/pid/';
+        $process = new Process($command);
 
-        if ( ! file_exists($folder)) {
-            mkdir($folder, 0755);
-        }
+        $process->start(function ($type, $line) use ($output) {
+            $output->write($line);
+        });
 
-        $pidFile = $folder . 'tomahawk_'.microtime(true).'.pid';
+        $process->getPid();
 
-        if ($pid == -1) {
-            syslog(1, 'Unable to start worker as a daemon');
-            $output->writeln('Unable to start worker as a daemon');
-            return 0;
-        }
-        else if ($pid) {
-            file_put_contents($pidFile, $pid);
-            $output->writeln('Worker started as a daemon');
-            return 0;
-        }
+        //$process->
 
-
-        $this->registerSigHandlers();
-        $container = $this->getContainer();
-
-        $symfonyStyle = new SymfonyStyle($input, $output);
-        $output->setDecorated(true);
-
-        $this->queues = explode(',', $input->getArgument('queues'));
-
-        $storage = $container[StorageInterface::class];
-
-        $this->worker = new Worker($storage, $this->queues);
-        $this->worker->work();
-
+        file_put_contents(getcwd() . '/tomahawk.pid', $process->getPid());
         return 0;
+        /*$process->start(function ($type, $line) use ($output) {
+            $output->write($line);
+        });*/
+
+        //exit(0);
     }
 
     protected function daemonize()
@@ -114,16 +81,14 @@ class WorkerCommand extends ContainerAwareCommand
         //$process->getPid();
     }
 
-    public function shutDownNow()
-    {
-        echo 'Shutting down NOW';
-        exit(0);
-    }
-
-    public function shutdown()
+    private function shutDownNow()
     {
         echo 'Shutting down';
-        exit(0);
+    }
+
+    private function shutdown()
+    {
+        echo 'Shutting down';
     }
 
     /**
@@ -140,11 +105,11 @@ class WorkerCommand extends ContainerAwareCommand
             return;
         }
 
-        // @TODO - Do we need all of these?
+        // @TODO - We don't need all of these
 
-        pcntl_signal(SIGTERM, array($this, 'shutDownNow'));
-        pcntl_signal(SIGINT, array($this, 'shutDownNow'));
-        pcntl_signal(SIGQUIT, array($this, 'shutdown'));
+        //pcntl_signal(SIGTERM, array($this, 'shutDownNow'));
+        //pcntl_signal(SIGINT, array($this, 'shutDownNow'));
+        //pcntl_signal(SIGQUIT, array($this, 'shutdown'));
         //pcntl_signal(SIGUSR1, array($this, 'killChild'));
         //pcntl_signal(SIGUSR2, array($this, 'pauseProcessing'));
         //pcntl_signal(SIGCONT, array($this, 'unPauseProcessing'));

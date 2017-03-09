@@ -22,9 +22,9 @@ class RedisStorage implements StorageInterface
      * RedisStorage constructor.
      * @param Client $client
      */
-    public function __construct(Client $client)
+    public function __construct(Client $client = null)
     {
-        $this->client = $client;
+        $this->client = $client ?: new Client();
     }
 
     /**

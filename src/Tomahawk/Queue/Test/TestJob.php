@@ -16,6 +16,7 @@ class TestJob extends AbstractJob
      */
     public function process()
     {
-        echo 'From Test Job' . PHP_EOL;
+        //file_put_contents(__DIR__ .'/../../../../log/test.log', 'From Test Job' . PHP_EOL, FILE_APPEND);
+        //exit(0);
     }
 }

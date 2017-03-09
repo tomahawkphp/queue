@@ -3,7 +3,8 @@
         bootstrap="./queue-bootstrap.php">
 
     <workers>
-        <worker amount="2" queue="emails" />
+        <worker name="Emails" number="2" queues="emails" />
+        <worker name="Test" number="2" queues="test" />
     </workers>
 
 </tomahawk>

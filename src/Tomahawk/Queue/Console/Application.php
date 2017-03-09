@@ -2,8 +2,11 @@
 
 namespace Tomahawk\Queue\Console;
 
+use Pimple\Container;
+use Tomahawk\Queue\Application as MainApplication;
 use Symfony\Component\Console\Application as BaseApplication;
-use Tomahawk\Queue\Util\Configuration;
+use Tomahawk\Queue\DependencyInjection\QueueServiceProvider;
+use Tomahawk\Queue\Util\ConfigurationLoader;
 
 /**
  * Class Application
@@ -29,7 +32,17 @@ class Application extends BaseApplication
 
     public function configure()
     {
-        $configuration = new Configuration($this->directory);
-        $configuration->load();
+        // Load configuration - tomahawk.xml
+        $configurationLoader = new ConfigurationLoader($this->directory);
+        $configuration = $configurationLoader->load();
+
+        // Set container on application
+        MainApplication::setContainer(new Container());
+        MainApplication::setConfiguration($configuration);
+
+        // Register service providers
+        MainApplication::getContainer()
+            ->register(new QueueServiceProvider($configuration))
+        ;
     }
 }

@@ -1,6 +1,9 @@
 #!/usr/bin/env php
 <?php
 
+use Tomahawk\Queue\Console\Application as ConsoleApplication;
+use Tomahawk\Queue\Console\Command\ListenCommand;
+use Tomahawk\Queue\Console\Command\LoadCommand;
 use Tomahawk\Queue\Console\Command\QueueCommand;
 use Tomahawk\Queue\Console\Command\WorkerCommand;
 use Symfony\Component\Console\Input\ArgvInput;
@@ -18,10 +21,11 @@ if ( ! ini_get('date.timezone')) {
     ini_set('date.timezone', 'UTC');
 }
 
+define('TOMAHAWK_QUEUE_BINARY', __FILE__);
+
 foreach ($autoloadPaths as $file) {
     if (file_exists($file)) {
         define('TOMAHAWK_QUEUE_COMPOSER_INSTALL', $file);
-
         break;
     }
 }
@@ -38,14 +42,18 @@ if ( ! defined('TOMAHAWK_QUEUE_COMPOSER_INSTALL')) {
     die(1);
 }
 
-require TOMAHAWK_QUEUE_COMPOSER_INSTALL;
+/** @var \Composer\Autoload\ClassLoader $loader */
+$loader = require TOMAHAWK_QUEUE_COMPOSER_INSTALL;
+
 
 $input = new ArgvInput();
 $output = new ConsoleOutput();
-//$output->setVerbosity(ConsoleOutput::)
+$output->setDecorated(true);
 
-$application = new \Tomahawk\Queue\Console\Application($currentDirectory);
+$application = new ConsoleApplication($currentDirectory);
 $application->add(new WorkerCommand());
 $application->add(new QueueCommand());
+$application->add(new ListenCommand());
+$application->add(new LoadCommand());
 $application->configure();
 $application->run($input, $output);
