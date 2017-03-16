@@ -49,4 +49,14 @@ class PcntlProcess
 
         return $this->processId;
     }
+
+    /**
+     * Exit
+     *
+     * @param int $statusCode
+     */
+    public function exit(int $statusCode)
+    {
+        exit($statusCode);
+    }
 }

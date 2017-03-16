@@ -97,9 +97,11 @@ class Worker
                 break;
             }
 
+            //@codeCoverageIgnoreStart
             if ($this->paused) {
                 continue;
             }
+            //@codeCoverageIgnoreEnd
 
             $job = $this->getNextJob();
 
@@ -134,16 +136,13 @@ class Worker
                         }
 
                         if (0 === $pid) {
-                            //exit(0);
+                            $process->exit(0);
                         }
                     }
                     else if ($pid > 0) {
                         $status = 'Forked ' . $pid . ' at ' . strftime('%F %T');
-                        //file_put_contents(__DIR__ .'/../../../log/test.log', $status . PHP_EOL, FILE_APPEND);
-                        /*$exitStatus = $process->wait($status);
-                        if (0 !== $exitStatus) {
-                            //Job exited with exit code
-                        }*/
+                        $exitStatus = $process->wait($status);
+                        // @TODO - what to do here if 0 !== $exitStatu??
                     }
 
                     $pid = null;
