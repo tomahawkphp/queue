@@ -5,8 +5,14 @@ declare(ticks=1);
 namespace Tomahawk\Queue;
 
 use RuntimeException;
+use Symfony\Component\EventDispatcher\Event;
+use Tomahawk\Queue\Event\FailedEvent;
+use Tomahawk\Queue\Event\PreProcessEvent;
+use Tomahawk\Queue\Event\ProcessedEvent;
 use Tomahawk\Queue\Job\AbstractJob;
+use Tomahawk\Queue\Process\ProcessFactory;
 use Tomahawk\Queue\Storage\StorageInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Class Worker
@@ -48,14 +54,36 @@ class Worker
     /**
      * @var bool
      */
+    protected $paused = false;
+
+    /**
+     * @var bool
+     */
     protected $running = true;
 
-    public function __construct(StorageInterface $storage, array $queues)
+    /**
+     * @var EventDispatcherInterface
+     */
+    protected $eventDispatcher;
+
+    /**
+     * @var ProcessFactory
+     */
+    protected $processFactory;
+
+    public function __construct(
+        StorageInterface $storage,
+        ProcessFactory $processFactory,
+        array $queues,
+        EventDispatcherInterface $eventDispatcher = null
+    )
     {
         $this->storage = $storage;
+        $this->processFactory = $processFactory;
         $this->queues = $queues;
         $this->hostname = php_uname('n');
         $this->id = $this->hostname . ':'.getmypid() . ':' . implode(',', $this->queues);
+        $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
@@ -65,45 +93,137 @@ class Worker
     {
         while ($this->running) {
 
+            if ($this->shutdown) {
+                break;
+            }
+
+            if ($this->paused) {
+                continue;
+            }
+
             $job = $this->getNextJob();
 
             if ($job) {
 
                 try {
 
-                    $pid = pcntl_fork();
+                    $process = $this->processFactory->make();
+                    $pid = $process->fork();
 
                     if (-1 === $pid) {
                         throw new \RuntimeException('Could not fork process');
                     }
 
-                    if (0 === $pid || false === $pid) {
-                        $job->process();
+                    if (0 === $pid) {
+
+                        $preProcessEvent = new PreProcessEvent($job);
+                        $this->fireEvent(JobEvents::PRE_PROCESS, $preProcessEvent);
+
+                        try {
+
+                            if ( ! $preProcessEvent->isCancelled()) {
+                                $job->process();
+
+                                $processsedEvent = new ProcessedEvent($job);
+                                $this->fireEvent(JobEvents::PROCESSED, $processsedEvent);
+                            }
+                        }
+                        catch (\Exception $e) {
+                            $failedEvent = new FailedEvent($job, $e);
+                            $this->fireEvent(JobEvents::FAILED, $failedEvent);
+                        }
+
                         if (0 === $pid) {
-                            //file_put_contents(__DIR__ .'/../../../log/test.log', 'Exiting...' . PHP_EOL, FILE_APPEND);
-                            exit(0);
+                            //exit(0);
                         }
                     }
-                    else if($pid > 0) {
+                    else if ($pid > 0) {
                         $status = 'Forked ' . $pid . ' at ' . strftime('%F %T');
                         //file_put_contents(__DIR__ .'/../../../log/test.log', $status . PHP_EOL, FILE_APPEND);
-                        pcntl_wait($status);
-                        $exitStatus = pcntl_wexitstatus($status);
+                        /*$exitStatus = $process->wait($status);
                         if (0 !== $exitStatus) {
                             //Job exited with exit code
-                        }
+                        }*/
                     }
 
                     $pid = null;
                 }
                 catch (\Exception $e) {
-
+                    $failedEvent = new FailedEvent($job, $e);
+                    $this->fireEvent(JobEvents::FAILED, $failedEvent);
                 }
             }
 
+            //@codeCoverageIgnoreStart
+            if ($interval >= 0) {
+                usleep($interval);
+            }
+            //@codeCoverageIgnoreEnd
+
+            if (-1 === $interval) {
+                $this->shutdown();
+            }
 
         }
     }
+
+    /**
+     * Shutdown worker
+     *
+     * @return $this
+     */
+    public function shutdown()
+    {
+        $this->shutdown = true;
+
+        return $this;
+    }
+
+    /**
+     * Is worker shutting down
+     *
+     * @return bool
+     */
+    public function isShuttingDown() : bool
+    {
+        return true === $this->shutdown;
+    }
+
+    /**
+     * Pause worker
+     *
+     * @return $this
+     */
+    public function pause()
+    {
+        $this->paused = true;
+
+        return $this;
+    }
+
+    /**
+     * Unpause worker
+     *
+     * @return $this
+     */
+    public function unpause()
+    {
+        $this->paused = false;
+
+        return $this;
+    }
+
+    /**
+     * Is worker paused
+     *
+     * @return bool
+     */
+    public function isPaused() : bool
+    {
+        return true === $this->paused;
+    }
+
+
 
     /**
      * Get next job
@@ -121,6 +241,20 @@ class Worker
         }
 
         return null;
+    }
+
+    /**
+     * Fire a given event if event dispatcher is present
+     *
+     * @param $eventName
+     * @param Event $event
+     * @return Event
+     */
+    protected function fireEvent($eventName, Event $event)
+    {
+        if ($this->eventDispatcher) {
+            return $this->eventDispatcher->dispatch($eventName, $event);
+        }
     }
 
 }

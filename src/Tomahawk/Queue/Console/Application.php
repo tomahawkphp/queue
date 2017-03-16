@@ -5,7 +5,8 @@ namespace Tomahawk\Queue\Console;
 use Pimple\Container;
 use Tomahawk\Queue\Application as MainApplication;
 use Symfony\Component\Console\Application as BaseApplication;
-use Tomahawk\Queue\DependencyInjection\QueueServiceProvider;
+use Tomahawk\Queue\DependencyInjection\CoreServiceProvider;
+use Tomahawk\Queue\DependencyInjection\EventServiceProvider;
 use Tomahawk\Queue\Util\ConfigurationLoader;
 
 /**
@@ -40,9 +41,16 @@ class Application extends BaseApplication
         MainApplication::setContainer(new Container());
         MainApplication::setConfiguration($configuration);
 
+
         // Register service providers
         MainApplication::getContainer()
-            ->register(new QueueServiceProvider($configuration))
+            ->register(new CoreServiceProvider($configuration))
+            ->register(new EventServiceProvider())
         ;
+
+
+        if ($bootstrap = $configuration->getBootstrap()) {
+            require_once($bootstrap);
+        }
     }
 }

@@ -67,7 +67,7 @@ class RedisStorage implements StorageInterface
      * @param array $arguments
      * @return bool
      */
-    public function push($queue, $jobClass, array $arguments)
+    public function push($queue, $jobClass, array $arguments = [])
     {
         $data = [
             'job'  => $jobClass,

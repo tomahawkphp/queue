@@ -7,8 +7,10 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\ProcessUtils;
+use Tomahawk\Queue\Application;
 use Tomahawk\Queue\Storage\StorageInterface;
 use Tomahawk\Queue\Worker;
 
@@ -56,6 +58,7 @@ class WorkerCommand extends ContainerAwareCommand
             ->setDescription('description')
             ->addOption('daemon', null, InputOption::VALUE_NONE, 'Run worker as a daemon')
             ->addArgument('queues', null, InputArgument::REQUIRED, 'Name of queues comma separated')
+            ->addArgument('pidfile', null, InputArgument::REQUIRED, 'pidfile')
             ->setHelp('help')
         ;
     }
@@ -67,27 +70,32 @@ class WorkerCommand extends ContainerAwareCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
-        // Ideally we want to be able to run multiple workers for other queues
-        // for forking and creating the pid file needs some work
-        $pid = pcntl_fork();
+        $storageDirectory = Application::getConfiguration()->getStorage();
 
-        $folder = getcwd() . '/pid/';
+        if ($input->getOption('daemon')) {
 
-        if ( ! file_exists($folder)) {
-            mkdir($folder, 0755);
-        }
+            // Ideally we want to be able to run multiple workers for other queues
+            // for forking and creating the pid file needs some work
+            $pid = pcntl_fork();
 
-        $pidFile = $folder . 'tomahawk_'.microtime(true).'.pid';
+            $folder = $storageDirectory . '/var/run/';
 
-        if ($pid == -1) {
-            syslog(1, 'Unable to start worker as a daemon');
-            $output->writeln('Unable to start worker as a daemon');
-            return 0;
-        }
-        else if ($pid) {
-            file_put_contents($pidFile, $pid);
-            $output->writeln('Worker started as a daemon');
-            return 0;
+            if ( ! file_exists($folder)) {
+                @mkdir($folder, 0755, true);
+            }
+
+            $pidFile = $folder . $input->getArgument('pidfile') . '.pid';
+
+            if (-1 === $pid) {
+                syslog(1, 'Unable to start worker as a daemon');
+                $output->writeln('Unable to start worker as a daemon');
+                return 0;
+            }
+            else if ($pid) {
+                file_put_contents($pidFile, $pid);
+                $output->writeln('Worker started as a daemon');
+                return 0;
+            }
         }
 
 
@@ -100,8 +108,14 @@ class WorkerCommand extends ContainerAwareCommand
         $this->queues = explode(',', $input->getArgument('queues'));
 
         $storage = $container[StorageInterface::class];
+        $eventDispatcher = null;
+        if (interface_exists('Symfony\Component\EventDispatcher\EventDispatcherInterface')) {
+            $eventDispatcher = $container[EventDispatcherInterface::class];
+        }
 
-        $this->worker = new Worker($storage, $this->queues);
+        //var_dump($eventDispatcher);
+
+        $this->worker = new Worker($storage, $this->queues, $eventDispatcher);
         $this->worker->work();
 
         return 0;
@@ -116,7 +130,13 @@ class WorkerCommand extends ContainerAwareCommand
 
     public function shutDownNow()
     {
-        echo 'Shutting down NOW';
+        echo 'Shutting down NOW' . PHP_EOL;
+        exit(0);
+    }
+
+    public function killChild()
+    {
+        echo 'kill' . PHP_EOL;
         exit(0);
     }
 
@@ -145,7 +165,7 @@ class WorkerCommand extends ContainerAwareCommand
         pcntl_signal(SIGTERM, array($this, 'shutDownNow'));
         pcntl_signal(SIGINT, array($this, 'shutDownNow'));
         pcntl_signal(SIGQUIT, array($this, 'shutdown'));
-        //pcntl_signal(SIGUSR1, array($this, 'killChild'));
+        pcntl_signal(SIGUSR1, array($this, 'killChild'));
         //pcntl_signal(SIGUSR2, array($this, 'pauseProcessing'));
         //pcntl_signal(SIGCONT, array($this, 'unPauseProcessing'));
         //$this->logger->log(Psr\Log\LogLevel::DEBUG, 'Registered signals');

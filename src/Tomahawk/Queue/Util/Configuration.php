@@ -28,6 +28,14 @@ class Configuration
     }
 
     /**
+     * @return string|null
+     */
+    public function getStorage()
+    {
+        return isset($this->config['storage']) ? $this->config['storage'] : null;
+    }
+
+    /**
      * @return array
      */
     public function getWorkers()

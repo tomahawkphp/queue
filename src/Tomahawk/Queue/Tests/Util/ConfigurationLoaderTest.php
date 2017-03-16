@@ -31,12 +31,27 @@ class ConfigurationLoaderTest extends AbstractTestCase
         $this->assertInstanceOf(Configuration::class, $configuration);
 
         $this->assertNotNull($configuration->getBootstrap());
+        $this->assertEquals('./storage', $configuration->getStorage());
         $this->assertCount(2, $configuration->getWorkers());
 
         foreach ($configuration->getWorkers() as $worker) {
+            $this->assertArrayHasKey('pidkey', $worker);
             $this->assertArrayHasKey('name', $worker);
             $this->assertArrayHasKey('number', $worker);
             $this->assertArrayHasKey('queues', $worker);
         }
+    }
+
+    public function testLoaderWithNoConfiguration()
+    {
+        $loader = new ConfigurationLoader(__DIR__);
+        $configuration = $loader->load();
+
+        $this->assertInstanceOf(Configuration::class, $configuration);
+
+        $this->assertNull($configuration->getBootstrap());
+        $this->assertEquals(__DIR__, $configuration->getStorage());
+        $this->assertCount(0, $configuration->getWorkers());
+
     }
 }

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tomahawk
+        storage="./storage"
         bootstrap="./queue-bootstrap.php">
 
     <workers>
-        <worker name="Emails" number="2" queues="emails" />
-        <worker name="Accounts" number="2" queues="accounts" />
+        <worker pidkey="emails" name="Emails" number="2" queues="emails" />
+        <worker pidkey="accounts" name="Accounts" number="2" queues="accounts" />
     </workers>
 
 </tomahawk>

@@ -29,37 +29,55 @@ class ConfigurationLoader
      */
     public function load()
     {
-        $contents  = file_get_contents($this->directory . '/tomahawk.xml');
+        $configurationFile = $this->directory . '/tomahawk.xml';
+
+        $contents = '';
+
+        if (file_exists($configurationFile)) {
+            $contents  = file_get_contents($configurationFile);
+        }
 
         $document = new DOMDocument();
         $document->preserveWhiteSpace = false;
         $internal  = libxml_use_internal_errors(true);
         $reporting = error_reporting(0);
-        $document->loadXML($contents);
+        $configuration = [
+            'bootstrap' => null,
+            'workers' => [],
+            'storage' => $this->directory // Default
+        ];
 
-        $xpath = new DOMXPath($document);
+        if (false !== $document->loadXML($contents)) {
 
-        $root = $document->documentElement;
+            $xpath = new DOMXPath($document);
 
-        $configuration = [];
+            $root = $document->documentElement;
 
-        if ($root->hasAttribute('bootstrap')) {
-            $configuration['bootstrap'] = $root->getAttribute('bootstrap');
-        }
+            if ($root->hasAttribute('bootstrap')) {
+                $configuration['bootstrap'] = $root->getAttribute('bootstrap');
+            }
 
-        foreach ($xpath->query('workers/worker') as $worker) {
+            if ($root->hasAttribute('storage')) {
+                $configuration['storage'] = $root->getAttribute('storage');
+            }
 
-            /** @var \DOMNode $worker */
+            foreach ($xpath->query('workers/worker') as $worker) {
 
-            $name = $worker->attributes->getNamedItem('name')->textContent;
-            $number = $worker->attributes->getNamedItem('number')->textContent;
-            $queues = $worker->attributes->getNamedItem('queues')->textContent;
+                /** @var \DOMNode $worker */
 
-            $configuration['workers'][] = [
-                'name'   => $name,
-                'number' => $number,
-                'queues' => $queues
-            ];
+                $pidkey = $worker->attributes->getNamedItem('pidkey')->textContent;
+                $name = $worker->attributes->getNamedItem('name')->textContent;
+                $number = $worker->attributes->getNamedItem('number')->textContent;
+                $queues = $worker->attributes->getNamedItem('queues')->textContent;
+
+                $configuration['workers'][] = [
+                    'pidkey' => $pidkey,
+                    'name'   => $name,
+                    'number' => $number,
+                    'queues' => $queues
+                ];
+
+            }
 
         }
 

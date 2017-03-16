@@ -7,6 +7,7 @@
  *
  */
 
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Tomahawk\Queue\Application;
 
 /**
@@ -21,4 +22,10 @@ require_once(__DIR__.'/vendor/autoload.php');
 date_default_timezone_set('Europe/London');
 
 
-//Application::getContainer()->register()
+$container = Application::getContainer();
+
+/** @var EventDispatcherInterface $eventDispatcher */
+$eventDispatcher = $container[EventDispatcherInterface::class];
+$eventDispatcher->addListener(\Tomahawk\Queue\JobEvents::PRE_PROCESS, function(\Tomahawk\Queue\Event\PreProcessEvent $event) {
+    $event->cancel();
+});

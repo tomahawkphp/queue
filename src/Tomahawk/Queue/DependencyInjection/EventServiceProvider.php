@@ -19,7 +19,7 @@ class EventServiceProvider implements ServiceProviderInterface
      */
     public function register(Container $pimple)
     {
-        if (class_exists('Symfony\Component\EventDispatcher\EventDispatcherInterface')) {
+        if (interface_exists('Symfony\Component\EventDispatcher\EventDispatcherInterface')) {
 
             $pimple[EventDispatcherInterface::class] = function() {
                 $eventDispatcher = new EventDispatcher();

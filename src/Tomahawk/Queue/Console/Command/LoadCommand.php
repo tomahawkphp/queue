@@ -26,7 +26,7 @@ class LoadCommand extends ContainerAwareCommand
     /**
      * @var array
      */
-    protected $queues =[];
+    protected $queues = [];
 
     /**
      * @var string
