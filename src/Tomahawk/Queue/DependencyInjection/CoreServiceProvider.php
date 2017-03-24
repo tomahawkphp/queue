@@ -9,6 +9,7 @@ use Psr\Log\LoggerInterface;
 use Monolog\Logger;
 use Tomahawk\Queue\Manager;
 use Tomahawk\Queue\Process\ProcessFactory;
+use Tomahawk\Queue\Process\ProcessHelper;
 use Tomahawk\Queue\Storage\RedisStorage;
 use Tomahawk\Queue\Util\Configuration;
 use Tomahawk\Queue\Storage\StorageInterface;
@@ -53,6 +54,10 @@ class CoreServiceProvider implements ServiceProviderInterface
 
         $pimple[ProcessFactory::class] = function (Container $c) {
             return new ProcessFactory();
+        };
+
+        $pimple[ProcessHelper::class] = function (Container $c) {
+            return new ProcessHelper();
         };
 
         // Logger

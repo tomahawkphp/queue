@@ -11,7 +11,9 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\ProcessUtils;
 use Tomahawk\Queue\Application;
+use Tomahawk\Queue\Process\ProcessFactory;
 use Tomahawk\Queue\Storage\StorageInterface;
+use Tomahawk\Queue\Util\FileSystem;
 use Tomahawk\Queue\Worker;
 
 /**
@@ -70,18 +72,26 @@ class WorkerCommand extends ContainerAwareCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        $container = Application::getContainer();
         $storageDirectory = Application::getConfiguration()->getStorage();
 
         if ($input->getOption('daemon')) {
 
+            /** @var ProcessFactory $processFactory */
+            $processFactory = $container[ProcessFactory::class];
+            $process = $processFactory->make();
             // Ideally we want to be able to run multiple workers for other queues
             // for forking and creating the pid file needs some work
-            $pid = pcntl_fork();
+            $process->fork();
+            $pid = $process->getProcessId();
 
-            $folder = $storageDirectory . '/var/run/';
+            /** @var FileSystem $fileSystem */
+            $fileSystem = $container[FileSystem::class];
 
-            if ( ! file_exists($folder)) {
-                @mkdir($folder, 0755, true);
+            $folder = $storageDirectory . '/var/run';
+
+            if ( ! $fileSystem->exists($folder)) {
+                $fileSystem->mkdir($folder, 0755, true);
             }
 
             $pidFile = $folder . $input->getArgument('pidfile') . '.pid';
@@ -92,7 +102,7 @@ class WorkerCommand extends ContainerAwareCommand
                 return 0;
             }
             else if ($pid) {
-                file_put_contents($pidFile, $pid);
+                $fileSystem->writeFile($pidFile, $pid);
                 $output->writeln('Worker started as a daemon');
                 return 0;
             }
@@ -108,14 +118,14 @@ class WorkerCommand extends ContainerAwareCommand
         $this->queues = explode(',', $input->getArgument('queues'));
 
         $storage = $container[StorageInterface::class];
+        $processFactory = $container[ProcessFactory::class];
         $eventDispatcher = null;
         if (interface_exists('Symfony\Component\EventDispatcher\EventDispatcherInterface')) {
             $eventDispatcher = $container[EventDispatcherInterface::class];
         }
 
-        //var_dump($eventDispatcher);
-
-        $this->worker = new Worker($storage, $this->queues, $eventDispatcher);
+        $symfonyStyle->note('Starting Worker');
+        $this->worker = new Worker($storage, $processFactory, $this->queues, $eventDispatcher);
         $this->worker->work();
 
         return 0;

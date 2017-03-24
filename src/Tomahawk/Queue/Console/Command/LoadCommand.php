@@ -9,6 +9,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Process\PhpExecutableFinder;
 use Symfony\Component\Process\ProcessUtils;
 use Tomahawk\Queue\Application;
+use Tomahawk\Queue\Process\ProcessHelper;
 use Tomahawk\Queue\Util\Configuration;
 
 /**
@@ -46,6 +47,10 @@ class LoadCommand extends ContainerAwareCommand
     {
         $symfonyStyle = new SymfonyStyle($input, $output);
 
+        $container = Application::getContainer();
+
+        $processHelper = $container[ProcessHelper::class];
+
         // Load all workers
         $workers = $this->getConfiguration()->getWorkers();
 
@@ -55,15 +60,14 @@ class LoadCommand extends ContainerAwareCommand
 
         foreach ($workers as $worker) {
             $command = $this->buildCommandTemplate();
-            $command = sprintf($command, $worker['queues']);
+            $command = sprintf($command, $worker['queues'], $worker['pidkey'] . '.pid');
 
-            exec($command, $out, $return);
+            $processHelper->exec($command, $out, $return);
 
             $workerRows[] = [
                 'name'   => $worker['name'],
                 'status' => 0 === $return ? 'Started' : 'Failed',
             ];
-            break;
         }
 
         $table = new Table($output);
@@ -85,7 +89,7 @@ class LoadCommand extends ContainerAwareCommand
      */
     protected function buildCommandTemplate()
     {
-        $command = 'work %s';
+        $command = 'work %s %s --daemon';
         return "{$this->phpBinary()} {$this->binary()} {$command} > /dev/null &";
     }
 

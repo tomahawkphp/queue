@@ -4,9 +4,9 @@
         bootstrap="./queue-bootstrap.php">
 
     <workers>
-        <worker pidkey="emails" name="Emails" number="2" queues="emails" />
-        <worker pidkey="emails_2" name="Emails" number="2" queues="emails" />
-        <worker pidkey="Test" number="2" queues="test" />
+        <worker pidkey="emails" name="Emails" queues="emails" />
+        <worker pidkey="emails_2" name="Emails" queues="emails" />
+        <worker pidkey="test" name="Test" queues="test" />
     </workers>
 
 </tomahawk>

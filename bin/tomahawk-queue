@@ -2,9 +2,11 @@
 <?php
 
 use Tomahawk\Queue\Console\Application as ConsoleApplication;
+use Tomahawk\Queue\Console\Command\ListCommand;
 use Tomahawk\Queue\Console\Command\ListenCommand;
 use Tomahawk\Queue\Console\Command\LoadCommand;
 use Tomahawk\Queue\Console\Command\QueueCommand;
+use Tomahawk\Queue\Console\Command\StopCommand;
 use Tomahawk\Queue\Console\Command\WorkerCommand;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -53,7 +55,9 @@ $output->setDecorated(true);
 $application = new ConsoleApplication($currentDirectory);
 $application->add(new WorkerCommand());
 $application->add(new QueueCommand());
+$application->add(new ListCommand());
 $application->add(new ListenCommand());
 $application->add(new LoadCommand());
+$application->add(new StopCommand());
 $application->configure();
 $application->run($input, $output);

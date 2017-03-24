@@ -42,4 +42,13 @@ class Configuration
     {
         return isset($this->config['workers']) ? $this->config['workers'] : [];
     }
+
+    /**
+     * @param $key
+     * @return null
+     */
+    public function findWorker($key)
+    {
+        return isset($this->config['workers'][$key]) ? $this->config['workers'][$key] : null;
+    }
 }

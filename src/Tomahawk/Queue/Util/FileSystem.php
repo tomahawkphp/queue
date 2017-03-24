@@ -39,4 +39,49 @@ class FileSystem
     {
         return file_get_contents($fileName);
     }
+
+    /**
+     * Delete file
+     *
+     * @param $fileName
+     * @return string
+     */
+    public function unlink($fileName)
+    {
+        return unlink($fileName);
+    }
+
+    /**
+     * Check if a file exists
+     *
+     * @param $fileName
+     * @return bool
+     */
+    public function exists($fileName)
+    {
+        return file_exists($fileName);
+    }
+
+    /**
+     * Get path info for a file
+     *
+     * @param $filename
+     * @param $flag
+     * @return mixed
+     */
+    public function pathinfo($filename, $flag)
+    {
+        return pathinfo($filename, $flag);
+    }
+
+    /**
+     * Get pid files from directory
+     *
+     * @param $directory
+     * @return array
+     */
+    public function getPidFiles($directory)
+    {
+        return glob(sprintf('%s/*.pid', $directory));
+    }
 }

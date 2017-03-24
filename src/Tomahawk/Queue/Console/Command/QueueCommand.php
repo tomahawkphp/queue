@@ -26,7 +26,7 @@ class QueueCommand extends ContainerAwareCommand
             ->setDescription('description')
             ->addArgument('queue', InputArgument::REQUIRED, 'Name of queue')
             ->addArgument('job_class', InputArgument::REQUIRED, 'Job class')
-            ->addArgument('arguments', InputArgument::OPTIONAL, 'Arguments', [])
+            ->addArgument('arguments', InputArgument::OPTIONAL, 'Arguments JSON encoded')
             ->setHelp('help')
         ;
     }
@@ -38,29 +38,17 @@ class QueueCommand extends ContainerAwareCommand
      */
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        $symfonyStyle = new SymfonyStyle($input, $output);
+
         $queueName = $input->getArgument('queue');
         $jobClass = $input->getArgument('job_class');
-        //$arguments = $input->getArgument('arguments');
-        $arguments = [];
+        if ($arguments = $input->getArgument('arguments')) {
+            $arguments = json_decode($arguments);
+        }
 
         $this->getManager()->queue($queueName, $jobClass, $arguments);
 
-        //$this->get
-        /*$data = [
-            'job' => TestJob::class,
-        ];
-
-        $client = new Client();
-        $client->rpush('tomahawk:queue:queuename', json_encode($data));
-
-        $output->setDecorated(true);
-
-        $symfonyStyle = new SymfonyStyle($input, $output);
-
-        $symfonyStyle->success('Hello');*/
-
-        //$process = new Process();
-        //$process->getPid();
+        $symfonyStyle->success(sprintf('Adding job to queue %s', $queueName));
     }
 
     /**

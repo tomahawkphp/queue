@@ -23,6 +23,7 @@
             <exclude>
                 <directory>./vendor</directory>
                 <file>./src/Tomahawk/Queue/Process/PcntlProcess.php</file>
+                <file>./src/Tomahawk/Queue/Process/ProcessHelper.php</file>
                 <directory>./src/Tomahawk/*/*/Resources</directory>
                 <directory>./src/Tomahawk/*/Tests</directory>
                 <directory>./src/Tomahawk/*/*/Tests</directory>

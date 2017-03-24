@@ -26,6 +26,6 @@ $container = Application::getContainer();
 
 /** @var EventDispatcherInterface $eventDispatcher */
 $eventDispatcher = $container[EventDispatcherInterface::class];
-$eventDispatcher->addListener(\Tomahawk\Queue\JobEvents::PRE_PROCESS, function(\Tomahawk\Queue\Event\PreProcessEvent $event) {
+/*$eventDispatcher->addListener(\Tomahawk\Queue\JobEvents::PRE_PROCESS, function(\Tomahawk\Queue\Event\PreProcessEvent $event) {
     $event->cancel();
-});
+});*/
