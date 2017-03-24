@@ -18,7 +18,6 @@
     "require": {
         "php": ">=7.0.0",
         "ext-pcntl": "*",
-        "ext-proc": "*",
         "ext-posix": "*",
         "pimple/pimple": "~3.0",
         "monolog/monolog": "~1.22",
