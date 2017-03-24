@@ -3,7 +3,6 @@
 
 use Tomahawk\Queue\Console\Application as ConsoleApplication;
 use Tomahawk\Queue\Console\Command\ListCommand;
-use Tomahawk\Queue\Console\Command\ListenCommand;
 use Tomahawk\Queue\Console\Command\LoadCommand;
 use Tomahawk\Queue\Console\Command\QueueCommand;
 use Tomahawk\Queue\Console\Command\StopCommand;
@@ -56,7 +55,6 @@ $application = new ConsoleApplication($currentDirectory);
 $application->add(new WorkerCommand());
 $application->add(new QueueCommand());
 $application->add(new ListCommand());
-$application->add(new ListenCommand());
 $application->add(new LoadCommand());
 $application->add(new StopCommand());
 $application->configure();

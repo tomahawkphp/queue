@@ -2,15 +2,11 @@
 
 namespace Tomahawk\Queue\Console\Command;
 
-use Predis\Client;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Process\Process;
 use Tomahawk\Queue\Manager;
-use Tomahawk\Queue\Test\TestJob;
 
 /**
  * Class QueueCommand
@@ -43,7 +39,7 @@ class QueueCommand extends ContainerAwareCommand
         $queueName = $input->getArgument('queue');
         $jobClass = $input->getArgument('job_class');
         if ($arguments = $input->getArgument('arguments')) {
-            $arguments = json_decode($arguments);
+            $arguments = json_decode($arguments, true);
         }
 
         $this->getManager()->queue($queueName, $jobClass, $arguments);

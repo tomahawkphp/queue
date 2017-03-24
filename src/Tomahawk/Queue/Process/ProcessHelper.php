@@ -1,6 +1,7 @@
 <?php
 
 namespace Tomahawk\Queue\Process;
+use Symfony\Component\Process\Process;
 
 /**
  * Class ProcessHelper
@@ -31,5 +32,15 @@ class ProcessHelper
     public function posixGetPGID($pid)
     {
         return posix_getpgid($pid);
+    }
+
+    /**
+     * @param $pid
+     * @return int
+     */
+    public function kill($pid)
+    {
+        $process = new Process('kill -9 ' . $pid);
+        return $process->run();
     }
 }

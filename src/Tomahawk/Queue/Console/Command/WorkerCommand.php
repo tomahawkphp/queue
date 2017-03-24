@@ -8,8 +8,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\Process\PhpExecutableFinder;
-use Symfony\Component\Process\ProcessUtils;
 use Tomahawk\Queue\Application;
 use Tomahawk\Queue\Process\ProcessFactory;
 use Tomahawk\Queue\Storage\StorageInterface;
@@ -66,7 +64,7 @@ class WorkerCommand extends ContainerAwareCommand
     }
 
     /**
-     * @param InputInterface $  input
+     * @param InputInterface $input
      * @param OutputInterface $output
      * @return int|null
      */
@@ -131,13 +129,6 @@ class WorkerCommand extends ContainerAwareCommand
         return 0;
     }
 
-    protected function daemonize()
-    {
-        // @TODO - Get this working
-        //$process = new Process();
-        //$process->getPid();
-    }
-
     public function shutDownNow()
     {
         echo 'Shutting down NOW' . PHP_EOL;
@@ -181,38 +172,4 @@ class WorkerCommand extends ContainerAwareCommand
         //$this->logger->log(Psr\Log\LogLevel::DEBUG, 'Registered signals');
     }
 
-    /**
-     * Build the environment specific worker command.
-     *
-     * @return string
-     */
-    protected function buildCommandTemplate()
-    {
-        $command = 'work %s';
-        return "{$this->phpBinary()} {$this->binary()} {$command}";
-    }
-
-    /**
-     * Get the binary.
-     *
-     * @return string
-     */
-    protected function binary()
-    {
-        return defined('TOMAHAWK_QUEUE_BINARY')
-            ? ProcessUtils::escapeArgument(TOMAHAWK_QUEUE_BINARY)
-            : 'tomahawk-queue';
-    }
-
-    /**
-     * Get the PHP binary.
-     *
-     * @return string
-     */
-    protected function phpBinary()
-    {
-        return ProcessUtils::escapeArgument(
-            (new PhpExecutableFinder)->find(false)
-        );
-    }
 }

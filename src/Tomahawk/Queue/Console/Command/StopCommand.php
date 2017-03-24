@@ -6,8 +6,8 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Process\Process;
 use Tomahawk\Queue\Application;
+use Tomahawk\Queue\Process\ProcessHelper;
 use Tomahawk\Queue\Util\Configuration;
 use Tomahawk\Queue\Util\FileSystem;
 
@@ -37,6 +37,9 @@ class StopCommand extends ContainerAwareCommand
         /** @var FileSystem $fileSystem */
         $fileSystem = $container[FileSystem::class];
 
+        /** @var ProcessHelper $processHelper */
+        $processHelper = $container[ProcessHelper::class];
+
         $configuration = Application::getConfiguration();
         $storageDirectory = $configuration->getStorage();
         $directory = $storageDirectory . '/var/run/';
@@ -50,16 +53,14 @@ class StopCommand extends ContainerAwareCommand
             $pid = $fileSystem->readFile($filePath);
 
             $symfonyStyle->success('Stopping worker');
-            $process = new Process('kill -9 ' . $pid);
-            $process->run();
+
+            $processHelper->kill($pid);
 
             $fileSystem->unlink($filePath);
 
             $symfonyStyle->success('Worker stopped');
-
         }
 
-        exit(0);
     }
 
     /**

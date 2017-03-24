@@ -40,9 +40,6 @@ class ListCommand extends ContainerAwareCommand
         /** @var FileSystem $fileSystem */
         $fileSystem = $container[FileSystem::class];
 
-        /** @var ProcessFactory $processFactory */
-        $processFactory = $container[ProcessFactory::class];
-
         $directory = $configuration->getStorage() . '/var/run';
 
         $workerRows = [];
@@ -92,8 +89,6 @@ class ListCommand extends ContainerAwareCommand
 
         $table->addRows($workerRows);
         $table->render();
-
-        return 0;
     }
 
     /**

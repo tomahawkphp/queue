@@ -67,13 +67,11 @@ class ConfigurationLoader
 
                 $pidkey = $worker->attributes->getNamedItem('pidkey')->textContent;
                 $name = $worker->attributes->getNamedItem('name')->textContent;
-                $number = $worker->attributes->getNamedItem('number')->textContent;
                 $queues = $worker->attributes->getNamedItem('queues')->textContent;
 
                 $configuration['workers'][$pidkey] = [
                     'pidkey' => $pidkey,
                     'name'   => $name,
-                    'number' => $number,
                     'queues' => $queues
                 ];
 
