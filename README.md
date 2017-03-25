@@ -68,13 +68,14 @@ date_default_timezone_set('Europe/London');
 // Get the container
 $container = Application::getContainer();
 
+// Set storage for jobs
 $container[StorageInterface::class] = function(Container $c) {
     $client = Client([
          'scheme' => 'tcp',
          'host'   => '10.0.0.1',
          'port'   => 6379,
     ]);
-    return new RedisStorage();
+    return new RedisStorage($client);
 };
 
 $eventDispatcher = $container[EventDispatcherInterface::class];
