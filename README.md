@@ -17,7 +17,7 @@ You can install Tomahawk Queue using composer:
 `composer require tomahawk/queue`
 
 
-###Setup configuration
+### Setup configuration
 
 First you need to create a new file called `tomahawk.xml`
 
@@ -43,7 +43,7 @@ Below is an example:
 ```
 
 
-###Bootstrap example file
+### Bootstrap example file
 
 ```php
 <?php
