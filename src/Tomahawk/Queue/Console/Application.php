@@ -18,7 +18,7 @@ class Application extends BaseApplication
 {
     const NAME = 'Tomahawk Queue';
 
-    const VERSION = '0.1.2';
+    const VERSION = '0.1.3';
 
     /**
      * @var string
