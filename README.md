@@ -52,6 +52,7 @@ use Tomahawk\Queue\Application;
 use Tomahawk\Queue\Storage\StorageInterface;
 use Tomahawk\Queue\Storage\RedisStorage;
 use Predis\Client;
+use Pimple\Container;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
@@ -70,7 +71,7 @@ $container = Application::getContainer();
 
 // Set storage for jobs
 $container[StorageInterface::class] = function(Container $c) {
-    $client = Client([
+    $client = new Client([
          'scheme' => 'tcp',
          'host'   => '10.0.0.1',
          'port'   => 6379,

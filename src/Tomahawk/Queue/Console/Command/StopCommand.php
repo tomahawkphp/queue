@@ -52,7 +52,7 @@ class StopCommand extends ContainerAwareCommand
 
             $pid = $fileSystem->readFile($filePath);
 
-            $symfonyStyle->success('Stopping worker');
+            $symfonyStyle->writeln('Stopping worker');
 
             $processHelper->kill($pid);
 

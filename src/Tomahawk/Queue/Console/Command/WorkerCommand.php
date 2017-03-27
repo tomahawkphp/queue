@@ -72,6 +72,8 @@ class WorkerCommand extends ContainerAwareCommand
     {
         $container = Application::getContainer();
         $storageDirectory = Application::getConfiguration()->getStorage();
+        $symfonyStyle = new SymfonyStyle($input, $output);
+        $output->setDecorated(true);
 
         if ($input->getOption('daemon')) {
 
@@ -92,7 +94,7 @@ class WorkerCommand extends ContainerAwareCommand
                 $fileSystem->mkdir($folder, 0755, true);
             }
 
-            $pidFile = $folder . $input->getArgument('pidfile') . '.pid';
+            $pidFile = $folder . '/'. $input->getArgument('pidfile') . '.pid';
 
             if (-1 === $pid) {
                 syslog(1, 'Unable to start worker as a daemon');
@@ -101,17 +103,14 @@ class WorkerCommand extends ContainerAwareCommand
             }
             else if ($pid) {
                 $fileSystem->writeFile($pidFile, $pid);
-                $output->writeln('Worker started as a daemon');
-                return 0;
+                $symfonyStyle->success('Worker started as a daemon');
+                exit(0);
             }
         }
 
 
         $this->registerSigHandlers();
         $container = $this->getContainer();
-
-        $symfonyStyle = new SymfonyStyle($input, $output);
-        $output->setDecorated(true);
 
         $this->queues = explode(',', $input->getArgument('queues'));
 
@@ -122,9 +121,12 @@ class WorkerCommand extends ContainerAwareCommand
             $eventDispatcher = $container[EventDispatcherInterface::class];
         }
 
-        $symfonyStyle->note('Starting Worker');
         $this->worker = new Worker($storage, $processFactory, $this->queues, $eventDispatcher);
         $this->worker->work();
+
+        if ( ! $input->getOption('daemon')) {
+            $symfonyStyle->success('Worker started');
+        }
 
         return 0;
     }

@@ -7,8 +7,12 @@
  *
  */
 
+use Pimple\Container;
+use Predis\Client;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Tomahawk\Queue\Application;
+use Tomahawk\Queue\Storage\RedisStorage;
+use Tomahawk\Queue\Storage\StorageInterface;
 
 /**
  * Get the Autoloader
@@ -21,8 +25,16 @@ require_once(__DIR__.'/vendor/autoload.php');
 
 date_default_timezone_set('Europe/London');
 
-
 $container = Application::getContainer();
+
+$container[StorageInterface::class] = function(Container $c) {
+    $client = new Client([
+        //'scheme' => 'tcp',
+        'host'   => '127.0.0.1',
+        'port'   => 6379,
+    ]);
+    return new RedisStorage($client);
+};
 
 /** @var EventDispatcherInterface $eventDispatcher */
 $eventDispatcher = $container[EventDispatcherInterface::class];
