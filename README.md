@@ -92,6 +92,27 @@ $container[EventDispatcherInterface::class];
 
 ```
 
+## Using the CLI
+
+### Create a new worker
+ 
+```./bin/tomahawk-queue work emails emails --daemon```
+
+### Queue a new job to worker
+ 
+```./bin/tomahawk-queue queue emails JobClass {"id":"1"}```
+
+### List running workers
+ 
+```./bin/tomahawk-queue list```
+
+### Stop a running worker
+ 
+```./bin/tomahawk-queue stop emails```
+
+### Load and run all workers defined in configuration file
+ 
+```./bin/tomahawk-queue load```
 
 ## Using the Queue Manager
 
