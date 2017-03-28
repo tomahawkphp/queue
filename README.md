@@ -17,7 +17,7 @@ You can install Tomahawk Queue using composer:
 `composer require tomahawk/queue`
 
 
-### Setup configuration
+### 1. Setup configuration
 
 First you need to create a new file called `tomahawk.xml`
 
@@ -43,7 +43,9 @@ Below is an example:
 ```
 
 
-### Bootstrap example file
+### 2. Create Bootstrap file
+
+Bootstrap example file
 
 ```php
 <?php
@@ -89,6 +91,37 @@ $eventDispatcher->addListener(\Tomahawk\Queue\JobEvents::PROCESSED, function(\To
 $container[EventDispatcherInterface::class];
 
 ```
+
+
+## Using the Queue Manager
+
+If you have your works setup on a different VM or server you can still push jobs onto the queue using the Queue Manager.
+
+Below is an example of how to do this
+ 
+ ```php
+ <?php 
+ 
+ use Predis\Client;
+ use Tomahawk\Queue\Manager;
+ use Tomahawk\Queue\Storage\RedisStorage;
+ 
+ $client = new Client([
+      'scheme' => 'tcp',
+      'host'   => '10.0.0.1',
+      'port'   => 6379,
+ ]);
+ $storage = new RedisStorage($client);
+     
+ $manager = new Manager($storage);
+ 
+ $arguments = [
+     'email' => '...',
+     'subject' => '...',
+];
+ 
+ $manager->queue('queue_email', 'JobClass', $arguments);
+ ```
 
 ## License
 
