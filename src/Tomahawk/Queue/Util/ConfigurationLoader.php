@@ -4,6 +4,7 @@ namespace Tomahawk\Queue\Util;
 
 use DOMDocument;
 use DOMXPath;
+use Tomahawk\Queue\Util\Worker\Settings;
 
 /**
  * Class ConfigurationLoader
@@ -68,11 +69,24 @@ class ConfigurationLoader
                 $pidkey = $worker->attributes->getNamedItem('pidkey')->textContent;
                 $name = $worker->attributes->getNamedItem('name')->textContent;
                 $queues = $worker->attributes->getNamedItem('queues')->textContent;
+                $autoloadSetting = $worker->attributes->getNamedItem('autoload')->textContent;
+
+                // If autoload is not set then default to true
+                if ( ! $autoloadSetting) {
+                    $autoloadSetting = 'true';
+                }
+
+                $autoload = 'true' === $autoloadSetting;
+
+                // Is it better to hold the worker settings in a class or array??
+
+                //$configuration['workers'][$pidkey] = new Settings($name, $pidkey, $queues, $autoload);
 
                 $configuration['workers'][$pidkey] = [
                     'pidkey' => $pidkey,
-                    'name'   => $name,
-                    'queues' => $queues
+                    'name' => $name,
+                    'queues' => $queues,
+                    'autoload' => $autoload,
                 ];
 
             }
