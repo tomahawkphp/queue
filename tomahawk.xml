@@ -5,7 +5,7 @@
 
     <workers>
         <worker pidkey="emails" name="Emails" queues="emails" />
-        <worker pidkey="emails_2" name="Emails" queues="emails" />
+        <worker pidkey="emails_2" name="Emails" queues="emails" autoload="false" />
         <worker pidkey="test" name="Test" queues="test" />
     </workers>
 

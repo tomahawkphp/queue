@@ -24,7 +24,7 @@ class ListCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-            ->setName('list')
+            ->setName('worker:list')
             ->setDescription('List all running workers')
             ->setHelp('help')
         ;

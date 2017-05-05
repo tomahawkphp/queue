@@ -18,11 +18,11 @@ class QueueCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-            ->setName('queue')
-            ->setDescription('description')
+            ->setName('worker:queue')
+            ->setDescription('Queue a job')
             ->addArgument('queue', InputArgument::REQUIRED, 'Name of queue')
             ->addArgument('job_class', InputArgument::REQUIRED, 'Job class')
-            ->addArgument('arguments', InputArgument::OPTIONAL, 'Arguments JSON encoded')
+            ->addArgument('arguments', InputArgument::OPTIONAL|InputArgument::IS_ARRAY, 'Arguments as key value separated with a colon. e.g name:tom')
             ->setHelp('help')
         ;
     }
@@ -38,8 +38,16 @@ class QueueCommand extends ContainerAwareCommand
 
         $queueName = $input->getArgument('queue');
         $jobClass = $input->getArgument('job_class');
-        if ($arguments = $input->getArgument('arguments')) {
-            $arguments = json_decode($arguments, true);
+        $arguments = [];
+
+        $argumentsString = $input->getArgument('arguments');
+
+        var_dump($argumentsString);exit;
+
+        if ($argumentsString) {
+
+
+            $arguments = json_decode($argumentsString, true);
         }
 
         $this->getManager()->queue($queueName, $jobClass, $arguments);

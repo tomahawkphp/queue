@@ -16,8 +16,10 @@ class TestJob extends AbstractJob
      */
     public function process()
     {
+        //die;
+        //echo 'Woot2';
         //throw new \Exception('kk');
-        //file_put_contents(__DIR__ .'/../../../../storage/log/test.log', 'From Test Job' . PHP_EOL, FILE_APPEND);
+        file_put_contents(__DIR__ .'/../../../../storage/log/test.log', 'From Test Job 2' . PHP_EOL, FILE_APPEND);
         //exit(0);
     }
 }

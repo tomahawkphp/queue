@@ -21,7 +21,7 @@ class StopCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-            ->setName('stop')
+            ->setName('worker:stop')
             ->addArgument('pidkey', null, InputArgument::REQUIRED, 'Pid key of worker')
             ->setDescription('Stop running worker')
             ->setHelp('help')

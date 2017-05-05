@@ -135,14 +135,12 @@ class Worker
                             $this->fireEvent(JobEvents::FAILED, $failedEvent);
                         }
 
-                        if (0 === $pid) {
-                            $process->exit(0);
-                        }
+                        $process->exit(0);
                     }
                     else if ($pid > 0) {
                         $status = 'Forked ' . $pid . ' at ' . strftime('%F %T');
                         $exitStatus = $process->wait($status);
-                        // @TODO - what to do here if 0 !== $exitStatu??
+                        // @TODO - what to do here if 0 !== $exitStatus??
                     }
 
                     $pid = null;
@@ -221,8 +219,6 @@ class Worker
     {
         return true === $this->paused;
     }
-
-
 
     /**
      * Get next job

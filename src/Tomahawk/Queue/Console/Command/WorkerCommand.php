@@ -54,8 +54,8 @@ class WorkerCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-            ->setName('work')
-            ->setDescription('description')
+            ->setName('worker:work')
+            ->setDescription('Start worker for given queues')
             ->addOption('daemon', null, InputOption::VALUE_NONE, 'Run worker as a daemon')
             ->addArgument('queues', null, InputArgument::REQUIRED, 'Name of queues comma separated')
             ->addArgument('pidfile', null, InputArgument::REQUIRED, 'pidfile')

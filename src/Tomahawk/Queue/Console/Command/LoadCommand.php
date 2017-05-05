@@ -37,7 +37,7 @@ class LoadCommand extends ContainerAwareCommand
     protected function configure()
     {
         $this
-            ->setName('load')
+            ->setName('worker:load')
             ->setDescription('Load and start all workers defined in configuration file (tomahawk.xml) as daemons')
             ->setHelp('help')
         ;
@@ -60,7 +60,7 @@ class LoadCommand extends ContainerAwareCommand
 
         foreach ($workers as $worker) {
             $command = $this->buildCommandTemplate();
-            $command = sprintf($command, $worker['queues'], $worker['pidkey'] . '.pid');
+            $command = sprintf($command, $worker['queues'], $worker['pidkey']);
 
             $processHelper->exec($command, $out, $return);
 
