@@ -4,11 +4,11 @@ declare(ticks=1);
 
 namespace Tomahawk\Queue;
 
-use RuntimeException;
 use Symfony\Component\EventDispatcher\Event;
 use Tomahawk\Queue\Event\FailedEvent;
 use Tomahawk\Queue\Event\PreProcessEvent;
 use Tomahawk\Queue\Event\ProcessedEvent;
+use Tomahawk\Queue\Exception\MemoryExceededException;
 use Tomahawk\Queue\Job\AbstractJob;
 use Tomahawk\Queue\Process\ProcessFactory;
 use Tomahawk\Queue\Storage\StorageInterface;
@@ -37,16 +37,6 @@ class Worker
     protected $queues;
 
     /**
-     * @var string
-     */
-    protected $hostname;
-
-    /**
-     * @var string
-     */
-    protected $id;
-
-    /**
      * @var bool
      */
     protected $shutdown = false;
@@ -55,11 +45,6 @@ class Worker
      * @var bool
      */
     protected $paused = false;
-
-    /**
-     * @var bool
-     */
-    protected $running = true;
 
     /**
      * @var EventDispatcherInterface
@@ -81,17 +66,23 @@ class Worker
         $this->storage = $storage;
         $this->processFactory = $processFactory;
         $this->queues = $queues;
-        $this->hostname = php_uname('n');
-        $this->id = $this->hostname . ':'.getmypid() . ':' . implode(',', $this->queues);
         $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
      * @param int $interval
+     * @param int $memoryLimit
+     * @param bool $asDaemon
      */
-    public function work($interval = 5000)
+    public function work($interval = 5000, $memoryLimit = 128, $asDaemon = false)
     {
-        while ($this->running) {
+        //@codeCoverageIgnoreStart
+        if ($asDaemon) {
+            $this->registerSigHandlers();
+        }
+        //@codeCoverageIgnoreEnd
+
+        while (true) {
 
             if ($this->shutdown) {
                 break;
@@ -102,6 +93,11 @@ class Worker
                 continue;
             }
             //@codeCoverageIgnoreEnd
+
+            // @TODO - Check if memory limit is reached
+            if ($this->hasMemoryExceeded($memoryLimit)) {
+                throw new MemoryExceededException();
+            }
 
             $job = $this->getNextJob();
 
@@ -123,12 +119,13 @@ class Worker
 
                         try {
 
-                            if ( ! $preProcessEvent->isCancelled()) {
+                            if (!$preProcessEvent->isCancelled()) {
                                 $job->process();
 
                                 $processsedEvent = new ProcessedEvent($job);
                                 $this->fireEvent(JobEvents::PROCESSED, $processsedEvent);
                             }
+
                         }
                         catch (\Exception $e) {
                             $failedEvent = new FailedEvent($job, $e);
@@ -181,7 +178,7 @@ class Worker
      *
      * @return bool
      */
-    public function isShuttingDown() : bool
+    public function isShuttingDown(): bool
     {
         return true === $this->shutdown;
     }
@@ -215,7 +212,7 @@ class Worker
      *
      * @return bool
      */
-    public function isPaused() : bool
+    public function isPaused(): bool
     {
         return true === $this->paused;
     }
@@ -243,13 +240,103 @@ class Worker
      *
      * @param $eventName
      * @param Event $event
-     * @return Event
+     * @return Event|null
      */
     protected function fireEvent($eventName, Event $event)
     {
         if ($this->eventDispatcher) {
             return $this->eventDispatcher->dispatch($eventName, $event);
         }
+    }
+
+    /**
+     * @return bool
+     */
+    protected function stopIfNeeded()
+    {
+        return true;
+    }
+
+    /**
+     * @return bool
+     */
+    protected function shouldRun()
+    {
+        if ($this->paused) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param $memoryLimit
+     * @return bool
+     */
+    protected function hasMemoryExceeded($memoryLimit)
+    {
+        return (memory_get_usage() / 1024 / 1024) >= $memoryLimit;
+    }
+
+    public function shutDownNow()
+    {
+        if (extension_loaded('posix')) {
+            posix_kill(getmypid(), SIGKILL);
+        }
+
+        //echo 'Shutting down NOW' . PHP_EOL;
+        exit(0);
+    }
+
+    public function killChild()
+    {
+        echo 'kill' . PHP_EOL;
+        exit(0);
+    }
+
+    public function shutdownWorker()
+    {
+        echo 'Shutting down';
+        exit(0);
+    }
+
+    public function pauseProcessing()
+    {
+        $this->pause();
+        //echo 'Paused';
+    }
+
+    public function unPauseProcessing()
+    {
+        $this->unpause();
+        //echo 'Un paused';
+    }
+
+    /**
+     * Register signal handlers that a worker should respond to.
+     *
+     * TERM: Shutdown immediately and stop processing jobs.
+     * INT: Shutdown immediately and stop processing jobs.
+     * QUIT: Shutdown after the current job finishes processing.
+     * USR1: Kill the forked child immediately and continue processing jobs.
+     */
+    private function registerSigHandlers()
+    {
+        if ( ! function_exists('pcntl_signal')) {
+            return;
+        }
+
+        // @TODO - Do we need all of these?
+
+        pcntl_signal(SIGTERM, [$this, 'shutDownNow']);
+        pcntl_signal(SIGUSR2, [$this, 'pauseProcessing']);
+        pcntl_signal(SIGCONT, [$this, 'unPauseProcessing']);
+
+        //pcntl_signal(SIGINT, array($this, 'shutDownNow'));
+        //pcntl_signal(SIGQUIT, array($this, 'shutdown'));
+        //pcntl_signal(SIGUSR1, array($this, 'killChild'));
+
+        //$this->logger->log(Psr\Log\LogLevel::DEBUG, 'Registered signals');
     }
 
 }

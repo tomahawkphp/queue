@@ -57,6 +57,8 @@ class WorkerCommand extends ContainerAwareCommand
             ->setName('worker:work')
             ->setDescription('Start worker for given queues')
             ->addOption('daemon', null, InputOption::VALUE_NONE, 'Run worker as a daemon')
+            ->addOption('memory-limit', null, InputOption::VALUE_OPTIONAL, 'Memory limit', 128)
+            ->addOption('interval', null, InputOption::VALUE_OPTIONAL, 'Interval in milliseconds', 5000)
             ->addArgument('queues', null, InputArgument::REQUIRED, 'Name of queues comma separated')
             ->addArgument('pidfile', null, InputArgument::REQUIRED, 'pidfile')
             ->setHelp('help')
@@ -74,8 +76,13 @@ class WorkerCommand extends ContainerAwareCommand
         $storageDirectory = Application::getConfiguration()->getStorage();
         $symfonyStyle = new SymfonyStyle($input, $output);
         $output->setDecorated(true);
+        $asDaemon = false;
+        $interval = $input->getOption('interval');
+        $memoryLimit = $input->getOption('memory-limit');
 
         if ($input->getOption('daemon')) {
+
+            $asDaemon = true;
 
             /** @var ProcessFactory $processFactory */
             $processFactory = $container[ProcessFactory::class];
@@ -108,8 +115,6 @@ class WorkerCommand extends ContainerAwareCommand
             }
         }
 
-
-        $this->registerSigHandlers();
         $container = $this->getContainer();
 
         $this->queues = explode(',', $input->getArgument('queues'));
@@ -122,7 +127,7 @@ class WorkerCommand extends ContainerAwareCommand
         }
 
         $this->worker = new Worker($storage, $processFactory, $this->queues, $eventDispatcher);
-        $this->worker->work();
+        $this->worker->work($interval, $memoryLimit, $asDaemon);
 
         if ( ! $input->getOption('daemon')) {
             $symfonyStyle->success('Worker started');
@@ -130,48 +135,4 @@ class WorkerCommand extends ContainerAwareCommand
 
         return 0;
     }
-
-    public function shutDownNow()
-    {
-        echo 'Shutting down NOW' . PHP_EOL;
-        exit(0);
-    }
-
-    public function killChild()
-    {
-        echo 'kill' . PHP_EOL;
-        exit(0);
-    }
-
-    public function shutdown()
-    {
-        echo 'Shutting down';
-        exit(0);
-    }
-
-    /**
-     * Register signal handlers that a worker should respond to.
-     *
-     * TERM: Shutdown immediately and stop processing jobs.
-     * INT: Shutdown immediately and stop processing jobs.
-     * QUIT: Shutdown after the current job finishes processing.
-     * USR1: Kill the forked child immediately and continue processing jobs.
-     */
-    private function registerSigHandlers()
-    {
-        if ( ! function_exists('pcntl_signal')) {
-            return;
-        }
-
-        // @TODO - Do we need all of these?
-
-        pcntl_signal(SIGTERM, array($this, 'shutDownNow'));
-        pcntl_signal(SIGINT, array($this, 'shutDownNow'));
-        pcntl_signal(SIGQUIT, array($this, 'shutdown'));
-        pcntl_signal(SIGUSR1, array($this, 'killChild'));
-        //pcntl_signal(SIGUSR2, array($this, 'pauseProcessing'));
-        //pcntl_signal(SIGCONT, array($this, 'unPauseProcessing'));
-        //$this->logger->log(Psr\Log\LogLevel::DEBUG, 'Registered signals');
-    }
-
 }
