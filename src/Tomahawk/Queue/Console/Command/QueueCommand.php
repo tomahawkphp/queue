@@ -38,17 +38,7 @@ class QueueCommand extends ContainerAwareCommand
 
         $queueName = $input->getArgument('queue');
         $jobClass = $input->getArgument('job_class');
-        $arguments = [];
-
-        $argumentsString = $input->getArgument('arguments');
-
-        var_dump($argumentsString);exit;
-
-        if ($argumentsString) {
-
-
-            $arguments = json_decode($argumentsString, true);
-        }
+        $arguments = $this->parseArguments($input->getArgument('arguments'));
 
         $this->getManager()->queue($queueName, $jobClass, $arguments);
 
@@ -64,4 +54,25 @@ class QueueCommand extends ContainerAwareCommand
     {
         return $this->getContainer()[Manager::class];
     }
+
+    protected function parseArguments(array $arguments = [])
+    {
+        if ( ! $arguments) {
+            return [];
+        }
+
+        $parsed = [];
+
+        foreach ($arguments as $argument) {
+            $parts = explode(':', $argument);
+            if (2 !== count($parts)) {
+                continue;
+            }
+
+            $parsed[$parts[0]] = $parts[1];
+        }
+
+        return $parsed;
+    }
+
 }
